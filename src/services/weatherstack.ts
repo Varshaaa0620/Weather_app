@@ -5,7 +5,8 @@ import type { WeatherResponse, FilterOptions } from '../types';
 class WeatherStackAPI {
   private api: AxiosInstance;
   private apiKey = '9ed0bf38478d37814f2c795673be25fd';
-  private baseURL = 'http://api.weatherstack.com';
+  // Use HTTPS to avoid mixed-content blocking when app is served over HTTPS
+  private baseURL = 'https://api.weatherstack.com';
 
   constructor() {
     this.api = axios.create({
