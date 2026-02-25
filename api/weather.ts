@@ -29,11 +29,20 @@ export default async function handler(req: any, res: any) {
 
     const response = await axios.get(url, { params, timeout: 10000 });
 
-    // Return API response transparently
+    // Return upstream API response transparently
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(response.data);
+    return res.status(response.status || 200).json(response.data);
   } catch (error: any) {
-    const message = error?.response?.data || error.message || 'Unknown error';
-    res.status(500).json({ error: message });
+    // Log full error for Vercel function logs
+    console.error('Proxy error:', error?.response?.status, error?.response?.data || error.message);
+
+    if (error?.response) {
+      // Forward upstream status and body when available
+      const status = error.response.status || 502;
+      const data = error.response.data || { error: error.message };
+      return res.status(status).json(data);
+    }
+
+    return res.status(500).json({ error: error.message || 'Unknown error' });
   }
 }
