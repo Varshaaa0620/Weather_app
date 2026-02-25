@@ -5,12 +5,15 @@ import type { WeatherResponse, FilterOptions } from '../types';
 class WeatherStackAPI {
   private api: AxiosInstance;
   private apiKey = '9ed0bf38478d37814f2c795673be25fd';
-  // Use HTTPS to avoid mixed-content blocking when app is served over HTTPS
-  private baseURL = 'https://api.weatherstack.com';
 
   constructor() {
+    // In production (deployed), route requests through the Vercel serverless proxy
+    // which lives at `/api/weather`. In development, call WeatherStack directly.
+    const useProxy = typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.PROD;
+    const baseURL = useProxy ? '/api/weather' : 'https://api.weatherstack.com';
+
     this.api = axios.create({
-      baseURL: this.baseURL,
+      baseURL,
       timeout: 10000,
     });
   }
@@ -20,14 +23,12 @@ class WeatherStackAPI {
    */
   async getCurrentWeather(query: string, options?: Partial<FilterOptions>): Promise<WeatherResponse> {
     try {
-      const params = {
-        access_key: this.apiKey,
-        query,
-        units: options?.unit === 'F' ? 'f' : 'm',
-      };
+      const params = this.api.defaults.baseURL === '/api/weather'
+        ? { endpoint: 'current', query, unit: options?.unit ?? 'C' }
+        : { access_key: this.apiKey, query, units: options?.unit === 'F' ? 'f' : 'm' };
 
       console.log('Fetching weather for:', query, 'with params:', params);
-      const response = await this.api.get('/current', { params });
+      const response = await this.api.get(this.api.defaults.baseURL === '/api/weather' ? '' : '/current', { params });
       console.log('API Response:', response.data);
       return response.data;
     } catch (error) {
@@ -45,14 +46,11 @@ class WeatherStackAPI {
     options?: Partial<FilterOptions>
   ): Promise<WeatherResponse> {
     try {
-      const params = {
-        access_key: this.apiKey,
-        query,
-        forecast_days: Math.min(days, 14),
-        units: options?.unit === 'F' ? 'f' : 'm',
-      };
+      const params = this.api.defaults.baseURL === '/api/weather'
+        ? { endpoint: 'forecast', query, days: Math.min(days, 14), unit: options?.unit ?? 'C' }
+        : { access_key: this.apiKey, query, forecast_days: Math.min(days, 14), units: options?.unit === 'F' ? 'f' : 'm' };
 
-      const response = await this.api.get('/forecast', { params });
+      const response = await this.api.get(this.api.defaults.baseURL === '/api/weather' ? '' : '/forecast', { params });
       return response.data;
     } catch (error) {
       throw this.handleError(error);
@@ -69,16 +67,11 @@ class WeatherStackAPI {
     options?: Partial<FilterOptions>
   ): Promise<WeatherResponse> {
     try {
-      const params = {
-        access_key: this.apiKey,
-        query,
-        historical_data: 1,
-        start_date: startDate,
-        end_date: endDate,
-        units: options?.unit === 'F' ? 'f' : 'm',
-      };
+      const params = this.api.defaults.baseURL === '/api/weather'
+        ? { endpoint: 'historical', query, startDate, endDate, unit: options?.unit ?? 'C' }
+        : { access_key: this.apiKey, query, historical_data: 1, start_date: startDate, end_date: endDate, units: options?.unit === 'F' ? 'f' : 'm' };
 
-      const response = await this.api.get('/historical', { params });
+      const response = await this.api.get(this.api.defaults.baseURL === '/api/weather' ? '' : '/historical', { params });
       return response.data;
     } catch (error) {
       throw this.handleError(error);
@@ -90,13 +83,11 @@ class WeatherStackAPI {
    */
   async getMarine(query: string, options?: Partial<FilterOptions>): Promise<WeatherResponse> {
     try {
-      const params = {
-        access_key: this.apiKey,
-        query,
-        units: options?.unit === 'F' ? 'f' : 'm',
-      };
+      const params = this.api.defaults.baseURL === '/api/weather'
+        ? { endpoint: 'marine', query, unit: options?.unit ?? 'C' }
+        : { access_key: this.apiKey, query, units: options?.unit === 'F' ? 'f' : 'm' };
 
-      const response = await this.api.get('/marine', { params });
+      const response = await this.api.get(this.api.defaults.baseURL === '/api/weather' ? '' : '/marine', { params });
       return response.data;
     } catch (error) {
       throw this.handleError(error);
@@ -111,13 +102,11 @@ class WeatherStackAPI {
     options?: Partial<FilterOptions>
   ): Promise<WeatherResponse> {
     try {
-      const params = {
-        access_key: this.apiKey,
-        query,
-        units: options?.unit === 'F' ? 'f' : 'm',
-      };
+      const params = this.api.defaults.baseURL === '/api/weather'
+        ? { endpoint: 'current', query, unit: options?.unit ?? 'C' }
+        : { access_key: this.apiKey, query, units: options?.unit === 'F' ? 'f' : 'm' };
 
-      const response = await this.api.get('/current', { params });
+      const response = await this.api.get(this.api.defaults.baseURL === '/api/weather' ? '' : '/current', { params });
       return response.data;
     } catch (error) {
       throw this.handleError(error);
